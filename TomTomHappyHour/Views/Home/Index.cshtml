@@ -9,23 +9,101 @@
 </div>
 
 <div class="row">
-    <div class="col-md-4">
-        <h2>Getting started</h2>
-        <p>
-            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-            enables a clean separation of concerns and gives you full control over markup
-            for enjoyable, agile development.
-        </p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
+    <div class="col-md-12">
+       
+            <div id="map" style='height:30em;width:30em'>
+                <label class='tt-form-label'>
+                    Search restaurant
+                    <input class='searchBtn' type='submit' value='Italian'>
+                    <input class='searchBtn' type='submit' value='Thai'>
+                    <input class='searchBtn' type='submit' value='French'>
+                </label>
+            </div>
+            <script id="map" type="module">
+                var apiKey = 'GPyOmzF4f9nmLboStJJbm5DU4ayNQcA5';
+                var SanFrancisco = 'San Francisco, California'
+
+                var categories = {
+                    Italian: '7315025',
+                    Thai: '7315048',
+                    French: '7315017'
+                }
+
+                var map = tt.map({
+                    key: apiKey,
+                    container: 'map',
+                    style: 'tomtom://vector/1/basic-main'
+                });
+
+                var markers = [];
+                map.addControl(new tt.FullscreenControl());
+                map.addControl(new tt.NavigationControl());
+
+                map.on('load', function () {
+                    tt.services.fuzzySearch({
+                        key: apiKey,
+                        idxSet: "Geo",
+                        query: SanFrancisco
+                    })
+                        .go()
+                        .then(response => moveMapToFirstResult(response))
+                })
+
+                var buttons = document.querySelectorAll('.searchBtn')
+                buttons.forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        markers.forEach((marker) => {
+                            marker.remove();
+                        })
+                        markers = [];
+                        tt.services.fuzzySearch({
+                            key: apiKey,
+                            center: map.getCenter(),
+                            query: 'restaurant',
+                            categorySet: categories[event.target.value]
+                        })
+                            .go()
+                            .then(response => createMarkersFromSearch(response)
+                            )
+                    })
+                })
+                function moveMapToFirstResult(response) {
+                    map.flyTo(
+                        {
+                            center: response.results[0].position,
+                            zoom: 12
+                        }
+                    )
+                }
+                function createMarkersFromSearch(response) {
+                    response.results.forEach(result => {
+                        var popup = new tt.Popup({ offset: 30 }).setHTML(createPopupContent(result));
+                        markers.push(new tt.Marker()
+                            .setLngLat(result.position)
+                            .setPopup(popup)
+                            .addTo(map));
+                    })
+                }
+                function createPopupContent(result) {
+                    return '<strong>' + result.poi.name + '</strong><br>' +
+                        ifDefined(result.address.streetNumber) + ' ' + ifDefined(result.address.streetName) + ' ' + result.address.municipality + '<br>' +
+                        ((result.poi.phone != undefined) ? 'Phone:' + result.poi.phone + '<br>' : '') +
+                        ((result.poi.url != undefined) ? '<a href="http://' + result.poi.url + '" target="_blank">Website</a><br>' : '');
+                }
+                function ifDefined(tmp) {
+                    return (tmp != undefined) ? tmp : '';
+                }
+
+
+            </script>
+        </body>
+
+
     </div>
-    <div class="col-md-4">
-        <h2>Get more libraries</h2>
-        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Web Hosting</h2>
-        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-    </div>
+
 </div>
+<div class="row">
+    <div class="col-md-12">
+       
+    </div>
+    </div>
